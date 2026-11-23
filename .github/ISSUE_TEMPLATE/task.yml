@@ -1,0 +1,49 @@
+name: Project Task
+description: Create a task for the INITIATORS HOPE INC. ERP project
+title: "[TASK] "
+labels: ["task"]
+body:
+  
+type: textarea
+  id: description
+  attributes:
+    label: Task Description
+    description: Describe the task.
+    placeholder: What needs to be done?
+  validations:
+    required: true
+
+  
+type: textarea
+  id: acceptance
+  attributes:
+    label: Acceptance Criteria
+    description: List the conditions required to complete this task.
+    placeholder: |
+[ ] Requirement 1
+[ ] Requirement 2
+validations:
+  required: true
+
+  
+type: dropdown
+  id: role
+  attributes:
+    label: Assigned Role
+    options:
+Scrum Master
+DB Admin
+Developer
+Tester
+UI/UX Designer
+validations:
+  required: true
+
+  
+type: textarea
+  id: notes
+  attributes:
+    label: Additional Notes
+    description: Add relevant information or dependencies.
+  validations:
+    required: false

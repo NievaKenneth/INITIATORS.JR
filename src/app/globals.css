@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --hope-forest: #173f35;
+  --hope-sidebar: #142d27;
+  --hope-green-2: #2f6b55;
+  --hope-ivory: #f7f5ee;
+  --hope-gold: #c5a45b;
+  --hope-ink: #202b26;
+  --hope-border: #e3e8e1;
+}
+
+@theme inline {
+  --color-hope-forest: var(--hope-forest);
+  --color-hope-sidebar: var(--hope-sidebar);
+  --color-hope-green-2: var(--hope-green-2);
+  --color-hope-ivory: var(--hope-ivory);
+  --color-hope-gold: var(--hope-gold);
+  --color-hope-ink: var(--hope-ink);
+  --color-hope-border: var(--hope-border);
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+}

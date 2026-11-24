@@ -1194,6 +1194,7 @@ DECLARE
     v_args TEXT;
 BEGIN
     FOR r IN
+        SELECT * FROM (VALUES
             ('employee',    'empno'),
             ('department',  'deptcode'),
             ('job',         'jobcode'),

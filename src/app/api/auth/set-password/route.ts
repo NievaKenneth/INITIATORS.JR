@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 type PasswordField = "password" | "confirmPassword";
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
 
   const { data: appUser, error: profileError } = await supabase
     .from("app_user")
-    .select("is_blocked, status")
+    .select("is_blocked, status, must_change_password")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -86,6 +87,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!appUser.must_change_password) {
+    return jsonResponse(
+      { message: "Password change is not required for this account." },
+      403,
+    );
+  }
+
   const { error: updateError } = await supabase.auth.updateUser({ password });
   if (updateError) {
     console.error("Supabase password update failed.", {
@@ -93,6 +101,37 @@ export async function POST(request: Request) {
     });
     return jsonResponse(
       { message: "Unable to update your password. Please try again." },
+      500,
+    );
+  }
+
+  const { data: updatedProfile, error: flagUpdateError } = await createAdminClient()
+    .from("app_user")
+    .update({ must_change_password: false })
+    .eq("user_id", user.id)
+    .select("user_id")
+    .maybeSingle();
+
+  if (flagUpdateError) {
+    console.error("Unable to clear must_change_password after password update.", {
+      code: flagUpdateError.code,
+    });
+    return jsonResponse(
+      {
+        message:
+          "Password updated, but account setup could not be completed. Contact an administrator.",
+      },
+      500,
+    );
+  }
+
+  if (!updatedProfile) {
+    console.error("No app_user row was found when clearing password-change flag.");
+    return jsonResponse(
+      {
+        message:
+          "Password updated, but account setup could not be completed. Contact an administrator.",
+      },
       500,
     );
   }

@@ -4,10 +4,15 @@ import { getCurrentAppUser } from "@/lib/supabase/profile";
 export const instant = false;
 
 export default async function DashboardPage() {
-  const { appUser, isApproved } = await getCurrentAppUser();
+  const { appUser, isApproved, mustChangePassword } =
+    await getCurrentAppUser();
 
   if (!appUser || !isApproved || appUser.is_blocked) {
     redirect("/login");
+  }
+
+  if (mustChangePassword) {
+    redirect("/set-password");
   }
 
   if (appUser.role_code === "user") {

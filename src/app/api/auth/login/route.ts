@@ -66,7 +66,7 @@ export async function POST(request: Request) {
 
   const { data: appUser, error: profileError } = await supabase
     .from("app_user")
-    .select("role_code, is_blocked, status")
+    .select("role_code, is_blocked, status, must_change_password")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -95,11 +95,16 @@ export async function POST(request: Request) {
       "Your account is blocked. Contact an administrator.";
   } else if (
     appUser.status === "Active" &&
-    (appUser.role_code === "superadmin" || appUser.role_code === "admin")
+    ["superadmin", "admin", "user"].includes(appUser.role_code)
   ) {
-    redirectTo = "/dashboard";
-  } else if (appUser.status === "Active" && appUser.role_code === "user") {
-    redirectTo = "/user-dashboard";
+    if (appUser.must_change_password) {
+      redirectTo = "/set-password";
+    } else {
+      redirectTo =
+        appUser.role_code === "superadmin" || appUser.role_code === "admin"
+          ? "/dashboard"
+          : "/user-dashboard";
+    }
   } else {
     rejectionMessage = invalidAccountMessage;
   }

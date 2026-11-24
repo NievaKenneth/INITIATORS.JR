@@ -90,7 +90,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: appUser, error: profileError } = await supabase
     .from("app_user")
-    .select("role_code, is_blocked, status")
+    .select("role_code, is_blocked, status, must_change_password")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -130,6 +130,10 @@ export async function proxy(request: NextRequest) {
     appUser.role_code === "superadmin" || appUser.role_code === "admin"
       ? "/dashboard"
       : "/user-dashboard";
+
+  if (appUser.must_change_password && pathname !== "/set-password") {
+    return redirectWithCookies(request, response, "/set-password");
+  }
 
   if (isAuthEntry) {
     return redirectWithCookies(request, response, roleDashboard);

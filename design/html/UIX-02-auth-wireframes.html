@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="HOPE Inc. ERP account access experience.">
+  <title>HOPE Inc. ERP</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --hope-forest: #173F35;
+      --hope-sidebar: #142D27;
+      --hope-green-2: #2F6B55;
+      --hope-sage: #DCE8DF;
+      --hope-ivory: #F7F5EE;
+      --hope-gold: #C5A45B;
+      --hope-ink: #202B26;
+      --hope-border: #E3E8E1;
+      --hope-white: #FFFFFF;
+
+      --font-sans: Inter, "Segoe UI", Arial, sans-serif;
+      --text-h1: 700 32px/1.2 var(--font-sans);
+      --text-h2: 600 24px/1.3 var(--font-sans);
+      --text-h3: 600 18px/1.4 var(--font-sans);
+      --text-body: 400 14px/1.55 var(--font-sans);
+      --text-caption: 400 12px/1.45 var(--font-sans);
+
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+      --space-12: 48px;
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-card: 0 2px 10px rgb(20 45 39 / 5%);
+      --focus-ring: 0 0 0 3px rgb(47 107 85 / 24%);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background: var(--hope-ivory);
+      color: var(--hope-ink);
+      font: var(--text-body);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    a {
+      color: var(--hope-forest);
+    }
+
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible {
+      outline: 2px solid var(--hope-green-2);
+      outline-offset: 2px;
+      box-shadow: var(--focus-ring);
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 48px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      border-bottom: 1px solid var(--hope-border);
+      background: var(--hope-white);
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--hope-ink);
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--hope-gold);
+      color: var(--hope-sidebar);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .brand-name {
+      font-size: 14px;
+      font-weight: 650;
+      letter-spacing: .12em;
+    }
+
+    .brand-caption {
+      display: block;
+      margin-top: 3px;
+      color: var(--hope-ink);
+      font: var(--text-caption);
+    }
+
+    .nav-actions,
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .button {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 16px;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .button-primary {
+      background: var(--hope-forest);
+      color: var(--hope-white);
+    }
+
+    .button-primary:hover {
+      background: var(--hope-green-2);
+    }
+
+    .button-secondary {
+      border-color: var(--hope-border);
+      background: var(--hope-white);
+      color: var(--hope-forest);
+    }
+
+    .button-secondary:hover {
+      border-color: var(--hope-green-2);
+      background: var(--hope-sage);
+    }
+
+    .hero {
+      padding: 64px 0 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--hope-green-2);
+      font: var(--text-caption);
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      max-width: 720px;
+      color: var(--hope-forest);
+      font: var(--text-h1);
+    }
+
+    h2 {
+      color: var(--hope-forest);
+      font: var(--text-h2);
+    }
+
+    h3 {
+      color: var(--hope-forest);
+      font: var(--text-h3);
+    }
+
+    .hero-copy {
+      max-width: 720px;
+    }
+
+    .hero-copy > p:not(.eyebrow) {
+      max-width: 620px;
+      margin-top: 14px;
+    }
+
+    .hero-copy .button-row {
+      margin-top: 22px;
+    }
+
+    .modules {
+      padding: 20px 0 64px;
+    }
+
+    .modules-heading {
+      margin-bottom: 16px;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .module-card {
+      min-width: 0;
+      padding: 20px;
+      border: 1px solid var(--hope-border);
+      border-radius: var(--radius-md);
+      background: var(--hope-white);
+      box-shadow: var(--shadow-card);
+    }
+
+    .module-mark {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 14px;
+      border-radius: var(--radius-sm);
+      background: var(--hope-sage);
+      color: var(--hope-forest);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .module-card p {
+      margin-top: 6px;
+      color: var(--hope-ink);
+      font: var(--text-caption);
+    }
+
+    .footer {
+      padding: 18px 0 24px;
+      border-top: 1px solid var(--hope-border);
+      color: var(--hope-ink);
+      font: var(--text-caption);
+    }
+
+    .auth-dialog {
+      width: min(480px, calc(100% - 24px));
+      max-width: 480px;
+      max-height: min(90vh, 760px);
+      overflow-y: auto;
+      padding: 24px;
+      border: 1px solid var(--hope-border);
+      border-radius: var(--radius-md);
+      background: var(--hope-white);
+      color: var(--hope-ink);
+      box-shadow: 0 8px 32px rgb(20 45 39 / 18%);
+    }
+
+    .auth-dialog::backdrop {
+      background: rgb(20 45 39 / 38%);
+    }
+
+    .auth-dialog[open] {
+      margin: auto;
+    }
+
+    .dialog-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .dialog-heading p {
+      margin-top: 5px;
+    }
+
+    .close-button {
+      min-height: 36px;
+      flex: 0 0 auto;
+      padding: 0 10px;
+    }
+
+    .field-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .name-fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label {
+      color: var(--hope-ink);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .input {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--hope-green-2);
+      border-radius: var(--radius-sm);
+      background: var(--hope-white);
+      color: var(--hope-ink);
+    }
+
+    .input::placeholder {
+      color: var(--hope-ink);
+      opacity: 1;
+    }
+
+    .input[aria-invalid="true"] {
+      border: 2px solid var(--hope-forest);
+      box-shadow: inset 0 0 0 1px var(--hope-gold);
+    }
+
+    .field-hint,
+    .field-error {
+      font: var(--text-caption);
+    }
+
+    .field-hint {
+      color: var(--hope-ink);
+    }
+
+    .field-error {
+      color: var(--hope-ink);
+    }
+
+    .password-control {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .password-control .input {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .form-note {
+      padding: 12px;
+      border-left: 3px solid var(--hope-gold);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      background: var(--hope-ivory);
+      color: var(--hope-ink);
+      font: var(--text-caption);
+    }
+
+    .form-message {
+      padding: 12px;
+      border-left: 3px solid var(--hope-gold);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      background: var(--hope-ivory);
+      color: var(--hope-ink);
+      font-size: 13px;
+    }
+
+    .form-message.success {
+      border-left-color: var(--hope-green-2);
+      background: var(--hope-sage);
+    }
+
+    .demo-hint {
+      padding: 10px 12px;
+      border: 1px solid var(--hope-border);
+      border-radius: var(--radius-sm);
+      background: var(--hope-ivory);
+      color: var(--hope-ink);
+      font: var(--text-caption);
+    }
+
+    .demo-hint strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--hope-forest);
+    }
+
+    .demo-hint ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .demo-hint li + li {
+      margin-top: 3px;
+    }
+
+    .form-links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px 16px;
+      font-size: 13px;
+    }
+
+    .form-links p {
+      width: 100%;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    @media (max-width: 820px) {
+      .module-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero {
+        padding-top: 48px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .page {
+        width: calc(100% - 32px);
+      }
+
+      .topbar {
+        min-height: 64px;
+        gap: 10px;
+      }
+
+      .brand-caption {
+        display: none;
+      }
+
+      .nav-actions {
+        gap: 6px;
+      }
+
+      .nav-actions .button {
+        min-height: 36px;
+        padding-inline: 10px;
+        font-size: 12px;
+      }
+
+      .hero {
+        padding: 40px 0 20px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+
+      .module-grid,
+      .name-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .module-card {
+        padding: 16px;
+      }
+
+      .auth-dialog {
+        width: calc(100% - 20px);
+        max-height: 92vh;
+        padding: 18px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="page topbar">
+    <a class="brand" href="#" aria-label="HOPE Inc. ERP home">
+      <span class="brand-mark" aria-hidden="true">H</span>
+      <span>
+        <span class="brand-name">HOPE, INC. ERP</span>
+        <span class="brand-caption">Enterprise Resource Planning</span>
+      </span>
+    </a>
+    <nav class="nav-actions" aria-label="Account">
+      <button class="button button-secondary" type="button" data-open-view="login">Sign In</button>
+      <button class="button button-primary" type="button" data-open-view="register">Register</button>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">HOPE Inc. ERP</p>
+        <h1 id="hero-title">A clearer way to work together.</h1>
+        <p>Bring your day-to-day operations into one calm, connected workspace.</p>
+        <div class="button-row">
+          <button class="button button-primary" type="button" data-open-view="register">Create an account</button>
+          <button class="button button-secondary" type="button" data-open-view="login">Sign in</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="modules" aria-labelledby="modules-title">
+      <div class="modules-heading">
+        <p class="eyebrow">One connected workspace</p>
+        <h2 id="modules-title">Built around your work</h2>
+      </div>
+      <div class="module-grid">
+        <article class="module-card">
+          <span class="module-mark" aria-hidden="true">C</span>
+          <h3>Customers</h3>
+          <p>Keep customer information organized in one place.</p>
+        </article>
+        <article class="module-card">
+          <span class="module-mark" aria-hidden="true">P</span>
+          <h3>Products</h3>
+          <p>Find the product details your team needs.</p>
+        </article>
+        <article class="module-card">
+          <span class="module-mark" aria-hidden="true">HR</span>
+          <h3>Human Resources</h3>
+          <p>Support your people and their work.</p>
+        </article>
+        <article class="module-card">
+          <span class="module-mark" aria-hidden="true">S</span>
+          <h3>Sales</h3>
+          <p>Keep sales activity moving with clarity.</p>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">HOPE Inc. ERP</footer>
+  </main>
+
+  <dialog class="auth-dialog" id="auth-dialog" aria-label="Account access">
+    <section class="auth-view" id="view-login" data-auth-view="login" aria-labelledby="login-title" hidden>
+      <header class="dialog-heading">
+        <div>
+          <h2 id="login-title">Sign in</h2>
+          <p>Welcome back to HOPE Inc. ERP.</p>
+        </div>
+        <button class="button button-secondary close-button" type="button" data-close-dialog>Close</button>
+      </header>
+      <form class="field-stack" id="login-form" novalidate>
+        <div class="field">
+          <label for="login-email">Email address</label>
+          <input class="input" id="login-email" name="email" type="email" autocomplete="username" required aria-describedby="login-email-hint login-email-error">
+          <span class="field-hint" id="login-email-hint">Use the email address linked to your account.</span>
+          <span class="field-error" id="login-email-error" data-error-for="email" hidden></span>
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <div class="password-control">
+            <input class="input" id="login-password" name="password" type="password" autocomplete="current-password" required aria-describedby="login-password-error">
+            <button class="button button-secondary" type="button" data-password-toggle="login-password" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <span class="field-error" id="login-password-error" data-error-for="password" hidden></span>
+        </div>
+        <div class="form-links">
+          <a href="#forgot-password" data-open-view="forgot-password">Forgot password?</a>
+          <a href="#register" data-open-view="register">Don't have an account? Register</a>
+          <p><a href="#set-password" data-open-view="set-password">Set a password for an administrator-created account</a></p>
+        </div>
+        <button class="button button-primary" type="submit">Sign in</button>
+        <p class="form-message" id="login-message" aria-live="polite" hidden></p>
+        <aside class="demo-hint" aria-label="Demo sign-in accounts">
+          <strong>Demo accounts</strong>
+          <ul>
+            <li>approved@hope.com / Hope1234! — sign-in success</li>
+            <li>pending@hope.com / any password — approval pending</li>
+            <li>blocked@hope.com / any password — blocked account</li>
+            <li>Any other email or a wrong password — credential error</li>
+          </ul>
+        </aside>
+      </form>
+    </section>
+
+    <section class="auth-view" id="view-register" data-auth-view="register" aria-labelledby="register-title" hidden>
+      <header class="dialog-heading">
+        <div>
+          <h2 id="register-title">Create your account</h2>
+          <p>Request access to the HOPE Inc. ERP workspace.</p>
+        </div>
+        <button class="button button-secondary close-button" type="button" data-close-dialog>Close</button>
+      </header>
+      <form class="field-stack" id="register-form" novalidate>
+        <div class="name-fields">
+          <div class="field">
+            <label for="register-first-name">First name</label>
+            <input class="input" id="register-first-name" name="firstName" autocomplete="given-name" required aria-describedby="register-first-name-error">
+            <span class="field-error" id="register-first-name-error" data-error-for="firstName" hidden></span>
+          </div>
+          <div class="field">
+            <label for="register-last-name">Last name</label>
+            <input class="input" id="register-last-name" name="lastName" autocomplete="family-name" required aria-describedby="register-last-name-error">
+            <span class="field-error" id="register-last-name-error" data-error-for="lastName" hidden></span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="register-email">Email address</label>
+          <input class="input" id="register-email" name="email" type="email" autocomplete="email" required aria-describedby="register-email-error">
+          <span class="field-error" id="register-email-error" data-error-for="email" hidden></span>
+        </div>
+        <div class="field">
+          <label for="register-password">Password</label>
+          <div class="password-control">
+            <input class="input" id="register-password" name="password" type="password" autocomplete="new-password" required aria-describedby="password-rule register-password-error">
+            <button class="button button-secondary" type="button" data-password-toggle="register-password" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <span class="field-hint" id="password-rule">At least 8 characters, with uppercase, lowercase, and number.</span>
+          <span class="field-error" id="register-password-error" data-error-for="password" hidden></span>
+        </div>
+        <div class="field">
+          <label for="register-confirm">Confirm password</label>
+          <input class="input" id="register-confirm" name="confirmPassword" type="password" autocomplete="new-password" required aria-describedby="register-confirm-error">
+          <span class="field-error" id="register-confirm-error" data-error-for="confirmPassword" hidden></span>
+        </div>
+        <p class="form-note">New accounts are User accounts and remain pending until an administrator approves them.</p>
+        <button class="button button-primary" type="submit">Create account</button>
+        <p class="form-message" id="register-message" aria-live="polite" hidden></p>
+        <p class="field-hint">Already have an account? <a href="#login" data-open-view="login">Sign in</a></p>
+      </form>
+    </section>
+
+    <section class="auth-view" id="view-forgot-password" data-auth-view="forgot-password" aria-labelledby="forgot-title" hidden>
+      <header class="dialog-heading">
+        <div>
+          <h2 id="forgot-title">Forgot password?</h2>
+          <p>Enter your email address to request a reset link.</p>
+        </div>
+        <button class="button button-secondary close-button" type="button" data-close-dialog>Close</button>
+      </header>
+      <form class="field-stack" id="forgot-form" novalidate>
+        <div class="field">
+          <label for="forgot-email">Email address</label>
+          <input class="input" id="forgot-email" name="email" type="email" autocomplete="email" required aria-describedby="forgot-email-error">
+          <span class="field-error" id="forgot-email-error" data-error-for="email" hidden></span>
+        </div>
+        <button class="button button-primary" type="submit">Send reset link</button>
+        <p class="form-message" id="forgot-message" aria-live="polite" hidden></p>
+        <button class="button button-secondary" id="demo-reset-link" type="button" hidden>Continue with demo reset link</button>
+        <p class="field-hint"><a href="#login" data-open-view="login">Return to sign in</a></p>
+      </form>
+    </section>
+
+    <section class="auth-view" id="view-reset-password" data-auth-view="reset-password" aria-labelledby="reset-title" hidden>
+      <header class="dialog-heading">
+        <div>
+          <h2 id="reset-title">Choose a new password</h2>
+          <p>Enter and confirm your new password.</p>
+        </div>
+        <button class="button button-secondary close-button" type="button" data-close-dialog>Close</button>
+      </header>
+      <p class="form-message" id="reset-link-error" role="alert" hidden>This reset link is invalid or has expired. Request a new link.</p>
+      <p class="field-hint" id="reset-link-action" hidden><a href="#forgot-password" data-open-view="forgot-password">Request a new link</a></p>
+      <form class="field-stack" id="reset-form" novalidate hidden>
+        <div class="field">
+          <label for="reset-password">New password</label>
+          <div class="password-control">
+            <input class="input" id="reset-password" name="password" type="password" autocomplete="new-password" required aria-describedby="password-rule reset-password-error">
+            <button class="button button-secondary" type="button" data-password-toggle="reset-password" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <span class="field-hint">At least 8 characters, with uppercase, lowercase, and number.</span>
+          <span class="field-error" id="reset-password-error" data-error-for="password" hidden></span>
+        </div>
+        <div class="field">
+          <label for="reset-confirm">Confirm new password</label>
+          <input class="input" id="reset-confirm" name="confirmPassword" type="password" autocomplete="new-password" required aria-describedby="reset-confirm-error">
+          <span class="field-error" id="reset-confirm-error" data-error-for="confirmPassword" hidden></span>
+        </div>
+        <button class="button button-primary" type="submit">Update password</button>
+        <p class="form-message" id="reset-message" aria-live="polite" hidden></p>
+      </form>
+    </section>
+
+    <section class="auth-view" id="view-set-password" data-auth-view="set-password" aria-labelledby="set-password-title" hidden>
+      <header class="dialog-heading">
+        <div>
+          <h2 id="set-password-title">Set your password</h2>
+          <p>For an account created by an administrator.</p>
+        </div>
+        <button class="button button-secondary close-button" type="button" data-close-dialog>Close</button>
+      </header>
+      <form class="field-stack" id="set-password-form" novalidate>
+        <div class="field">
+          <label for="first-login-password">New password</label>
+          <div class="password-control">
+            <input class="input" id="first-login-password" name="password" type="password" autocomplete="new-password" required aria-describedby="password-rule first-login-password-error">
+            <button class="button button-secondary" type="button" data-password-toggle="first-login-password" aria-label="Show password" aria-pressed="false">Show</button>
+          </div>
+          <span class="field-hint">At least 8 characters, with uppercase, lowercase, and number.</span>
+          <span class="field-error" id="first-login-password-error" data-error-for="password" hidden></span>
+        </div>
+        <div class="field">
+          <label for="first-login-confirm">Confirm new password</label>
+          <input class="input" id="first-login-confirm" name="confirmPassword" type="password" autocomplete="new-password" required aria-describedby="first-login-confirm-error">
+          <span class="field-error" id="first-login-confirm-error" data-error-for="confirmPassword" hidden></span>
+        </div>
+        <button class="button button-primary" type="submit">Set password</button>
+        <p class="form-message" id="set-password-message" aria-live="polite" hidden></p>
+        <p class="field-hint"><a href="#login" data-open-view="login">Return to sign in</a></p>
+      </form>
+    </section>
+  </dialog>
+
+  <script>
+    (() => {
+      const dialog = document.getElementById("auth-dialog");
+      const views = Array.from(document.querySelectorAll("[data-auth-view]"));
+      const validViews = new Set(views.map((view) => view.dataset.authView));
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      const demoAccounts = new Map([
+        ["approved@hope.com", { password: "Hope1234!", status: "approved" }],
+        ["pending@hope.com", { password: "anything", status: "pending" }],
+        ["blocked@hope.com", { password: "anything", status: "blocked" }],
+      ]);
+      let resetLinkValid = false;
+
+      function setHash(view, demoReset = false) {
+        const route = view ? `#${view}${demoReset ? "?demo=1" : ""}` : `${window.location.pathname}${window.location.search}`;
+        if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== route) {
+          window.history.replaceState(null, "", route);
+        }
+      }
+
+      function showView(name, updateHash = true, demoReset = false) {
+        const view = views.find((item) => item.dataset.authView === name);
+        if (!view) return;
+
+        views.forEach((item) => {
+          item.hidden = item !== view;
+        });
+
+        if (name === "reset-password") {
+          document.getElementById("reset-link-error").hidden = resetLinkValid;
+          document.getElementById("reset-link-action").hidden = resetLinkValid;
+          document.getElementById("reset-form").hidden = !resetLinkValid;
+        }
+
+        if (!dialog.open) dialog.showModal();
+        if (updateHash) setHash(name, demoReset);
+        view.querySelector("h2").focus({ preventScroll: true });
+      }
+
+      function openViewFromHash() {
+        const hash = window.location.hash.slice(1);
+        if (!hash) {
+          if (dialog.open) dialog.close();
+          return;
+        }
+
+        const [route, query] = hash.split("?");
+        const name = route === "register"
+          ? "register"
+          : route === "login"
+            ? "login"
+            : route;
+        if (!validViews.has(name)) return;
+
+        resetLinkValid = name === "reset-password" && query === "demo=1";
+        showView(name, false, resetLinkValid);
+      }
+
+      document.querySelectorAll("[data-open-view]").forEach((control) => {
+        control.addEventListener("click", (event) => {
+          event.preventDefault();
+          resetLinkValid = false;
+          showView(control.dataset.openView);
+        });
+      });
+
+      document.querySelectorAll("[data-close-dialog]").forEach((button) => {
+        button.addEventListener("click", () => dialog.close());
+      });
+
+      dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+
+      dialog.addEventListener("close", () => {
+        setHash("");
+      });
+
+      window.addEventListener("hashchange", openViewFromHash);
+      openViewFromHash();
+
+      document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const input = document.getElementById(button.dataset.passwordToggle);
+          const show = input.type === "password";
+          input.type = show ? "text" : "password";
+          button.textContent = show ? "Hide" : "Show";
+          button.setAttribute("aria-label", `${show ? "Hide" : "Show"} password`);
+          button.setAttribute("aria-pressed", String(show));
+        });
+      });
+
+      function setFieldError(form, name, message) {
+        const input = form.elements.namedItem(name);
+        const error = form.querySelector(`[data-error-for="${name}"]`);
+        input.setAttribute("aria-invalid", "true");
+        error.textContent = message;
+        error.hidden = false;
+      }
+
+      function clearFieldError(form, name) {
+        const input = form.elements.namedItem(name);
+        const error = form.querySelector(`[data-error-for="${name}"]`);
+        if (input) input.removeAttribute("aria-invalid");
+        if (error) {
+          error.textContent = "";
+          error.hidden = true;
+        }
+      }
+
+      function clearForm(form) {
+        form.querySelectorAll("[data-error-for]").forEach((error) => {
+          clearFieldError(form, error.dataset.errorFor);
+        });
+        const message = document.getElementById(`${form.id.replace(/-form$/, "")}-message`);
+        if (message) {
+          message.textContent = "";
+          message.hidden = true;
+          message.classList.remove("success");
+        }
+      }
+
+      function showFormMessage(form, message, success = false) {
+        const feedback = document.getElementById(`${form.id.replace(/-form$/, "")}-message`);
+        feedback.textContent = message;
+        feedback.hidden = false;
+        feedback.classList.toggle("success", success);
+        feedback.setAttribute("role", success ? "status" : "alert");
+      }
+
+      function validateEmail(form, value) {
+        let valid = true;
+        if (!value) {
+          setFieldError(form, "email", "Enter your email address.");
+          valid = false;
+        } else if (!emailPattern.test(value)) {
+          setFieldError(form, "email", "Enter a valid email address.");
+          valid = false;
+        }
+        return valid;
+      }
+
+      function validatePasswords(form, passwordName = "password", confirmName = "confirmPassword") {
+        const password = form.elements.namedItem(passwordName).value;
+        const confirmPassword = form.elements.namedItem(confirmName).value;
+        let valid = true;
+
+        if (!password) {
+          setFieldError(form, passwordName, "Enter a password.");
+          valid = false;
+        } else if (!passwordPattern.test(password)) {
+          setFieldError(
+            form,
+            passwordName,
+            "Use at least 8 characters, including an uppercase letter, a lowercase letter, and a number.",
+          );
+          valid = false;
+        }
+
+        if (!confirmPassword) {
+          setFieldError(form, confirmName, "Confirm your password.");
+          valid = false;
+        } else if (password !== confirmPassword) {
+          setFieldError(form, confirmName, "Passwords do not match.");
+          valid = false;
+        }
+
+        return valid;
+      }
+
+      document.querySelectorAll("form").forEach((form) => {
+        form.addEventListener("input", (event) => {
+          if (event.target.name) clearFieldError(form, event.target.name);
+          const message = document.getElementById(`${form.id.replace(/-form$/, "")}-message`);
+          if (message) message.hidden = true;
+          if (form.id === "forgot-form") document.getElementById("demo-reset-link").hidden = true;
+        });
+      });
+
+      const loginForm = document.getElementById("login-form");
+      loginForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        clearForm(loginForm);
+        const email = loginForm.elements.namedItem("email").value.trim().toLowerCase();
+        const password = loginForm.elements.namedItem("password").value;
+        let valid = validateEmail(loginForm, email);
+        if (!password) {
+          setFieldError(loginForm, "password", "Enter your password.");
+          valid = false;
+        }
+        if (!valid) return;
+
+        const account = demoAccounts.get(email);
+        if (account?.status === "pending") {
+          showFormMessage(loginForm, "Your account is waiting for admin approval.");
+        } else if (account?.status === "blocked") {
+          showFormMessage(loginForm, "Your account is blocked. Contact an administrator.");
+        } else if (account?.status === "approved" && account.password === password) {
+          showFormMessage(loginForm, "Signed in successfully.", true);
+        } else {
+          showFormMessage(loginForm, "Email or password is incorrect.");
+        }
+      });
+
+      const registerForm = document.getElementById("register-form");
+      registerForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        clearForm(registerForm);
+        let valid = true;
+        const firstName = registerForm.elements.namedItem("firstName").value.trim();
+        const lastName = registerForm.elements.namedItem("lastName").value.trim();
+        const email = registerForm.elements.namedItem("email").value.trim().toLowerCase();
+
+        if (!firstName) {
+          setFieldError(registerForm, "firstName", "Enter your first name.");
+          valid = false;
+        }
+        if (!lastName) {
+          setFieldError(registerForm, "lastName", "Enter your last name.");
+          valid = false;
+        }
+        if (!validateEmail(registerForm, email)) valid = false;
+        if (!validatePasswords(registerForm)) valid = false;
+        if (!valid) return;
+
+        if (demoAccounts.has(email)) {
+          setFieldError(registerForm, "email", "An account with this email already exists.");
+          return;
+        }
+
+        demoAccounts.set(email, {
+          password: registerForm.elements.namedItem("password").value,
+          status: "pending",
+        });
+        showFormMessage(registerForm, "Your account is waiting for admin approval.", true);
+      });
+
+      const forgotForm = document.getElementById("forgot-form");
+      forgotForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        clearForm(forgotForm);
+        document.getElementById("demo-reset-link").hidden = true;
+        const email = forgotForm.elements.namedItem("email").value.trim();
+        if (!validateEmail(forgotForm, email)) return;
+
+        showFormMessage(
+          forgotForm,
+          "If an account exists for this email, a reset link has been sent.",
+          true,
+        );
+        document.getElementById("demo-reset-link").hidden = false;
+      });
+
+      document.getElementById("demo-reset-link").addEventListener("click", () => {
+        resetLinkValid = true;
+        showView("reset-password", true, true);
+      });
+
+      const resetForm = document.getElementById("reset-form");
+      resetForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        clearForm(resetForm);
+        if (!resetLinkValid) {
+          showView("reset-password");
+          return;
+        }
+        if (!validatePasswords(resetForm)) return;
+
+        showFormMessage(resetForm, "Password updated. You can now sign in.", true);
+      });
+
+      const setPasswordForm = document.getElementById("set-password-form");
+      setPasswordForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        clearForm(setPasswordForm);
+        if (!validatePasswords(setPasswordForm)) return;
+
+        showFormMessage(setPasswordForm, "Password set. You can now sign in.", true);
+      });
+    })();
+  </script>
+</body>
+</html>

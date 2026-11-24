@@ -1,11 +1,5 @@
-const modules = [
-  "User Management",
-  "Customers",
-  "Products",
-  "Human Resources",
-  "Sales",
-  "Reports",
-];
+// TEMPORARY: replaced by the UIX-04 landing page in DEV-08.
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -22,38 +16,31 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="mx-auto grid max-w-7xl gap-10 px-6 py-16 md:grid-cols-[minmax(0,1.4fr)_minmax(16rem,0.6fr)] md:py-24">
+      <section className="mx-auto flex min-h-[calc(100vh-84px)] max-w-7xl items-center px-6 py-16 sm:py-24">
         <div className="max-w-2xl">
-          <p className="mb-3 text-sm font-semibold tracking-wide text-hope-green-2 uppercase">
-            Project foundation
-          </p>
           <h1 className="text-4xl font-semibold tracking-tight text-hope-forest sm:text-5xl">
             Welcome to HOPE Inc. ERP
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-hope-ink/75">
-            The application scaffold is ready. ERP features will be added in
-            upcoming development tasks.
+            Sign in to continue or register to request access to your ERP
+            workspace.
           </p>
-        </div>
 
-        <aside
-          aria-labelledby="modules-heading"
-          className="rounded-2xl border border-hope-border bg-white p-6 shadow-sm"
-        >
-          <h2
-            id="modules-heading"
-            className="text-lg font-semibold text-hope-forest"
-          >
-            Planned modules
-          </h2>
-          <ul className="mt-4 divide-y divide-hope-border">
-            {modules.map((module) => (
-              <li key={module} className="py-3 text-sm text-hope-ink/80">
-                {module}
-              </li>
-            ))}
-          </ul>
-        </aside>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              className="inline-flex min-h-10 items-center justify-center rounded-[6px] bg-hope-forest px-4 text-sm font-semibold text-white transition-colors hover:bg-hope-green-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2"
+              href="/login"
+            >
+              Sign In
+            </Link>
+            <Link
+              className="inline-flex min-h-10 items-center justify-center rounded-[6px] border border-hope-border bg-white px-4 text-sm font-semibold text-hope-forest transition-colors hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2"
+              href="/register"
+            >
+              Register
+            </Link>
+          </div>
+        </div>
       </section>
     </main>
   );

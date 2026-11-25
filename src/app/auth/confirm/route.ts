@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-type ConfirmationType = "email" | "recovery";
-type ConfirmationPath = "/login" | "/reset-password";
+type ConfirmationType = "email" | "recovery" | "invite";
+type ConfirmationPath = "/login" | "/reset-password" | "/set-password";
 
 function redirectTo(requestUrl: URL, path: string) {
   const response = NextResponse.redirect(new URL(path, requestUrl));
@@ -22,11 +22,17 @@ export async function GET(request: Request) {
   const requestedType = requestUrl.searchParams.get("type");
   const requestedNext = requestUrl.searchParams.get("next");
   const safeNext: ConfirmationPath | null =
-    requestedNext === "/login" || requestedNext === "/reset-password"
+    requestedNext === "/login" ||
+    requestedNext === "/reset-password" ||
+    requestedNext === "/set-password"
       ? requestedNext
       : null;
 
-  if (requestedType !== "email" && requestedType !== "recovery") {
+  if (
+    requestedType !== "email" &&
+    requestedType !== "recovery" &&
+    requestedType !== "invite"
+  ) {
     const invalidPath =
       safeNext === "/reset-password"
         ? "/reset-password?error=invalid"
@@ -61,5 +67,8 @@ export async function GET(request: Request) {
     return redirectTo(requestUrl, "/login?confirmed=1");
   }
 
-  return redirectTo(requestUrl, "/reset-password");
+  return redirectTo(
+    requestUrl,
+    type === "recovery" ? "/reset-password" : "/set-password",
+  );
 }

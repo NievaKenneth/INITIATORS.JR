@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseConfig } from "@/lib/supabase/env";
+import { getRecoverySessionStatus } from "@/lib/supabase/recovery";
 
 const noStore = "no-store, max-age=0, must-revalidate";
 
@@ -8,6 +9,8 @@ function isPrivatePage(pathname: string) {
   return (
     pathname === "/login" ||
     pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
     pathname === "/set-password" ||
     pathname === "/dashboard" ||
     pathname === "/user-dashboard"
@@ -123,6 +126,32 @@ export async function proxy(request: NextRequest) {
     if (isPrivatePage(pathname)) {
       response.headers.set("Cache-Control", noStore);
     }
+    return response;
+  }
+
+  const { isRecoverySession, error: claimsError } =
+    await getRecoverySessionStatus(supabase);
+  if (claimsError) {
+    console.error("Unable to verify the current Supabase session in proxy.", {
+      code: claimsError.name,
+    });
+    await supabase.auth.signOut();
+    if (isProtectedPage || isSetPassword) {
+      return redirectWithCookies(request, response, "/login");
+    }
+
+    if (isPrivatePage(pathname)) {
+      response.headers.set("Cache-Control", noStore);
+    }
+    return response;
+  }
+
+  if (isRecoverySession) {
+    if (pathname !== "/reset-password") {
+      return redirectWithCookies(request, response, "/reset-password");
+    }
+
+    response.headers.set("Cache-Control", noStore);
     return response;
   }
 

@@ -31,7 +31,14 @@ type ApiResult = {
   roles?: UserRole[];
 };
 type UserDialog = { kind: "add" } | { kind: "edit"; user: ManagedUser };
-type PendingAction = { action: "block" | "unblock"; user: ManagedUser };
+type UserAction =
+  | "block"
+  | "unblock"
+  | "approve"
+  | "disapprove"
+  | "makeAdmin"
+  | "removeAdmin";
+type PendingAction = { action: UserAction; user: ManagedUser };
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const fieldClass =
@@ -300,9 +307,14 @@ export default function UserManagementClient({
 
       setNotice(
         result.message ??
-          (pendingAction.action === "block"
-            ? "User blocked."
-            : "User unblocked."),
+          ({
+            block: "User blocked.",
+            unblock: "User unblocked.",
+            approve: "User approved.",
+            disapprove: "User disapproved.",
+            makeAdmin: "User updated.",
+            removeAdmin: "User updated.",
+          } satisfies Record<UserAction, string>)[pendingAction.action],
       );
       setNoticeIsError(false);
       await loadUsers();
@@ -433,6 +445,11 @@ export default function UserManagementClient({
                     const status = displayStatus(user);
                     const canManage =
                       actorRole === "superadmin" || user.role_code === "user";
+                    const isPendingUser =
+                      user.role_code === "user" && user.status === "Pending";
+                    const canChangeAdminRole =
+                      actorRole === "superadmin" &&
+                      (user.role_code === "user" || user.role_code === "admin");
                     const isBusy = busyUserId === user.user_id;
                     return (
                       <tr key={user.user_id}>
@@ -455,19 +472,44 @@ export default function UserManagementClient({
                             <span aria-label="No actions">—</span>
                           ) : (
                             <div className="flex flex-wrap gap-2">
-                              <button
-                                className="rounded-[6px] border border-hope-border px-2.5 py-1.5 text-xs font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2 disabled:opacity-50"
-                                type="button"
-                                disabled={isBusy}
-                                onClick={() =>
-                                  setPendingAction({
-                                    action: user.is_blocked ? "unblock" : "block",
-                                    user,
-                                  })
-                                }
-                              >
-                                {user.is_blocked ? "Unblock" : "Block"}
-                              </button>
+                              {isPendingUser ? (
+                                <>
+                                  <button
+                                    className="rounded-[6px] border border-hope-border px-2.5 py-1.5 text-xs font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2 disabled:opacity-50"
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() =>
+                                      setPendingAction({ action: "approve", user })
+                                    }
+                                  >
+                                    Approve
+                                  </button>
+                                  <button
+                                    className="rounded-[6px] border border-hope-border px-2.5 py-1.5 text-xs font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2 disabled:opacity-50"
+                                    type="button"
+                                    disabled={isBusy}
+                                    onClick={() =>
+                                      setPendingAction({ action: "disapprove", user })
+                                    }
+                                  >
+                                    Disapprove
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  className="rounded-[6px] border border-hope-border px-2.5 py-1.5 text-xs font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2 disabled:opacity-50"
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() =>
+                                    setPendingAction({
+                                      action: user.is_blocked ? "unblock" : "block",
+                                      user,
+                                    })
+                                  }
+                                >
+                                  {user.is_blocked ? "Unblock" : "Block"}
+                                </button>
+                              )}
                               <button
                                 className="rounded-[6px] border border-hope-border px-2.5 py-1.5 text-xs font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2"
                                 type="button"
@@ -475,6 +517,26 @@ export default function UserManagementClient({
                               >
                                 Edit
                               </button>
+                              {canChangeAdminRole ? (
+                                <button
+                                  className="rounded-[6px] border border-hope-border px-2.5 py-1.5 text-xs font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2 disabled:opacity-50"
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() =>
+                                    setPendingAction({
+                                      action:
+                                        user.role_code === "user"
+                                          ? "makeAdmin"
+                                          : "removeAdmin",
+                                      user,
+                                    })
+                                  }
+                                >
+                                  {user.role_code === "user"
+                                    ? "Make Admin"
+                                    : "Remove Admin"}
+                                </button>
+                              ) : null}
                             </div>
                           )}
                         </td>
@@ -718,12 +780,30 @@ export default function UserManagementClient({
               className="text-xl font-semibold text-hope-forest"
               id="confirm-user-title"
             >
-              {pendingAction.action === "block" ? "Block user?" : "Unblock user?"}
+              {pendingAction.action === "block"
+                ? "Block user?"
+                : pendingAction.action === "unblock"
+                  ? "Unblock user?"
+                  : pendingAction.action === "approve"
+                    ? "Approve user?"
+                    : pendingAction.action === "disapprove"
+                      ? "Disapprove user?"
+                      : pendingAction.action === "makeAdmin"
+                        ? "Make Admin?"
+                        : "Remove Admin?"}
             </h2>
             <p className="mt-3 text-sm leading-6 text-hope-ink/80">
               {pendingAction.action === "block"
                 ? `Block ${pendingAction.user.first_name} ${pendingAction.user.last_name}? They will no longer be able to sign in.`
-                : `Unblock ${pendingAction.user.first_name} ${pendingAction.user.last_name}?`}
+                : pendingAction.action === "unblock"
+                  ? `Unblock ${pendingAction.user.first_name} ${pendingAction.user.last_name}?`
+                  : pendingAction.action === "approve"
+                    ? `Approve ${pendingAction.user.first_name} ${pendingAction.user.last_name}?`
+                    : pendingAction.action === "disapprove"
+                      ? `Disapprove ${pendingAction.user.first_name} ${pendingAction.user.last_name}?`
+                      : pendingAction.action === "makeAdmin"
+                        ? `Make ${pendingAction.user.first_name} ${pendingAction.user.last_name} an admin?`
+                        : `Remove admin access for ${pendingAction.user.first_name} ${pendingAction.user.last_name}?`}
             </p>
             <div className="mt-6 flex justify-end gap-3">
               <button
@@ -744,7 +824,15 @@ export default function UserManagementClient({
                   ? "Saving..."
                   : pendingAction.action === "block"
                     ? "Block User"
-                    : "Unblock User"}
+                    : pendingAction.action === "unblock"
+                      ? "Unblock User"
+                      : pendingAction.action === "approve"
+                        ? "Approve"
+                        : pendingAction.action === "disapprove"
+                          ? "Disapprove"
+                          : pendingAction.action === "makeAdmin"
+                            ? "Make Admin"
+                            : "Remove Admin"}
               </button>
             </div>
           </section>

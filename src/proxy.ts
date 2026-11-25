@@ -13,7 +13,20 @@ function isPrivatePage(pathname: string) {
     pathname === "/reset-password" ||
     pathname === "/set-password" ||
     pathname === "/dashboard" ||
-    pathname === "/user-dashboard"
+    pathname === "/user-dashboard" ||
+    pathname === "/users" ||
+    pathname === "/settings" ||
+    pathname.startsWith("/modules/")
+  );
+}
+
+function isProtectedPage(pathname: string) {
+  return (
+    pathname === "/dashboard" ||
+    pathname === "/user-dashboard" ||
+    pathname === "/users" ||
+    pathname === "/settings" ||
+    pathname.startsWith("/modules/")
   );
 }
 
@@ -35,6 +48,11 @@ function redirectWithCookies(
 }
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  if (pathname === "/") {
+    return NextResponse.next({ request });
+  }
+
   const { url, anonKey } = getSupabaseConfig();
   let response = NextResponse.next({ request });
 
@@ -55,9 +73,7 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const pathname = request.nextUrl.pathname;
-  const isProtectedPage =
-    pathname === "/dashboard" || pathname === "/user-dashboard";
+  const protectedPage = isProtectedPage(pathname);
   const isAuthEntry = pathname === "/login" || pathname === "/register";
   const isSetPassword = pathname === "/set-password";
 
@@ -70,7 +86,7 @@ export async function proxy(request: NextRequest) {
     console.error("Unable to refresh the Supabase session in proxy.", {
       code: authError.name,
     });
-    if (isProtectedPage || isSetPassword) {
+    if (protectedPage || isSetPassword) {
       return redirectWithCookies(request, response, "/login");
     }
 
@@ -81,7 +97,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (!user) {
-    if (isProtectedPage || isSetPassword) {
+    if (protectedPage || isSetPassword) {
       return redirectWithCookies(request, response, "/login");
     }
 
@@ -102,7 +118,7 @@ export async function proxy(request: NextRequest) {
       code: profileError.code,
     });
     await supabase.auth.signOut();
-    if (isProtectedPage || isSetPassword) {
+    if (protectedPage || isSetPassword) {
       return redirectWithCookies(request, response, "/login");
     }
 
@@ -119,7 +135,7 @@ export async function proxy(request: NextRequest) {
     !["superadmin", "admin", "user"].includes(appUser.role_code)
   ) {
     await supabase.auth.signOut();
-    if (isProtectedPage || isSetPassword) {
+    if (protectedPage || isSetPassword) {
       return redirectWithCookies(request, response, "/login");
     }
 
@@ -136,7 +152,7 @@ export async function proxy(request: NextRequest) {
       code: claimsError.name,
     });
     await supabase.auth.signOut();
-    if (isProtectedPage || isSetPassword) {
+    if (protectedPage || isSetPassword) {
       return redirectWithCookies(request, response, "/login");
     }
 

@@ -2,6 +2,8 @@ import { Suspense } from "react";
 import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { getCurrentAppUser } from "@/lib/supabase/profile";
+import { getWorkspaceModuleAccess } from "@/lib/workspace";
+import AppShell from "@/features/app-shell/AppShell";
 import UserManagementClient from "@/features/user-management/UserManagementClient";
 
 export default function UsersPage() {
@@ -46,10 +48,14 @@ async function UsersPageContent() {
     redirect("/login");
   }
 
+  const moduleAccess = await getWorkspaceModuleAccess(appUser);
+
   return (
-    <UserManagementClient
-      actorRole={appUser.role_code}
-      actorUserId={appUser.user_id}
-    />
+    <AppShell appUser={appUser} moduleAccess={moduleAccess} currentPath="/users">
+      <UserManagementClient
+        actorRole={appUser.role_code}
+        actorUserId={appUser.user_id}
+      />
+    </AppShell>
   );
 }

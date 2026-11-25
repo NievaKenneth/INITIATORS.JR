@@ -1,17 +1,36 @@
+import { Suspense } from "react";
+import { connection } from "next/server";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getRecoverySessionStatus } from "@/lib/supabase/recovery";
 import ResetPasswordForm from "./ResetPasswordForm";
 
-export const instant = false;
-
 type ResetPasswordPageProps = {
   searchParams: Promise<{ error?: string | string[] }>;
 };
 
-export default async function ResetPasswordPage({
+export default function ResetPasswordPage({
   searchParams,
 }: ResetPasswordPageProps) {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-hope-ivory px-4 py-8 font-[Inter,_Segoe_UI,_Arial,sans-serif] text-hope-ink sm:px-6 sm:py-12">
+          <section className="mx-auto w-full max-w-[480px] rounded-[10px] border border-hope-border bg-white p-6 shadow-[0_2px_10px_rgb(20_45_39_/_5%)] sm:p-8">
+            <p className="text-sm text-hope-ink/80">Checking reset link...</p>
+          </section>
+        </main>
+      }
+    >
+      <ResetPasswordPageContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function ResetPasswordPageContent({
+  searchParams,
+}: ResetPasswordPageProps) {
+  await connection();
   const params = await searchParams;
   const supabase = await createClient();
   const {

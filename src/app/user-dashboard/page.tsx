@@ -1,9 +1,26 @@
+import { Suspense } from "react";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { getCurrentAppUser } from "@/lib/supabase/profile";
 
-export const instant = false;
+export default function UserDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-hope-ivory px-4 py-8 text-hope-ink sm:px-6">
+          <section className="mx-auto grid w-full max-w-3xl gap-4 rounded-[10px] border border-hope-border bg-white p-6 shadow-[0_2px_10px_rgb(20_45_39_/_5%)] sm:p-8">
+            <p className="text-sm text-hope-ink/80">Loading dashboard...</p>
+          </section>
+        </main>
+      }
+    >
+      <UserDashboardContent />
+    </Suspense>
+  );
+}
 
-export default async function UserDashboardPage() {
+async function UserDashboardContent() {
+  await connection();
   const { appUser, isApproved, mustChangePassword } =
     await getCurrentAppUser();
 

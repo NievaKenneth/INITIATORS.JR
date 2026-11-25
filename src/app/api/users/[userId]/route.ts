@@ -129,6 +129,145 @@ export async function PATCH(
     );
   }
 
+  if (body.action === "approve" || body.action === "disapprove") {
+    if (target.role_code !== "user") {
+      return jsonResponse(
+        { message: "You are not authorized to manage this account." },
+        403,
+      );
+    }
+
+    if (target.status !== "Pending") {
+      return jsonResponse(
+        { message: "Only Pending users can be approved or disapproved." },
+        409,
+      );
+    }
+
+    const approved = body.action === "approve";
+    const { data: updatedTarget, error: updateError } = await admin
+      .from("app_user")
+      .update({
+        status: approved ? "Active" : "Inactive",
+        is_blocked: false,
+      })
+      .eq("user_id", target.user_id)
+      .eq("role_code", "user")
+      .eq("status", "Pending")
+      .select("user_id")
+      .maybeSingle();
+
+    if (updateError) {
+      console.error("Unable to update the pending user's status.", {
+        code: updateError.code,
+      });
+      return jsonResponse(
+        { message: "Unable to update user. Please try again." },
+        500,
+      );
+    }
+
+    if (!updatedTarget) {
+      return jsonResponse(
+        { message: "This account is no longer Pending. Refresh and try again." },
+        409,
+      );
+    }
+
+    return jsonResponse(
+      { message: approved ? "User approved." : "User disapproved." },
+      200,
+    );
+  }
+
+  if (body.action === "makeAdmin" || body.action === "removeAdmin") {
+    if (access.actor.role_code !== "superadmin") {
+      return jsonResponse(
+        { message: "Only a Superadmin can change user roles." },
+        403,
+      );
+    }
+
+    if (target.user_id === access.actor.user_id) {
+      return jsonResponse(
+        { message: "You cannot change your own role." },
+        403,
+      );
+    }
+
+    const expectedRole = body.action === "makeAdmin" ? "user" : "admin";
+    const nextRole = body.action === "makeAdmin" ? "admin" : "user";
+    if (target.role_code !== expectedRole) {
+      return jsonResponse(
+        {
+          message:
+            body.action === "makeAdmin"
+              ? "Only User accounts can be made Admin."
+              : "Only Admin accounts can be changed to User.",
+        },
+        409,
+      );
+    }
+
+    const { data: selectedRole, error: roleError } = await admin
+      .from("role")
+      .select("role_code")
+      .eq("role_code", nextRole)
+      .maybeSingle();
+
+    if (roleError) {
+      console.error("Unable to validate the selected role.", {
+        code: roleError.code,
+      });
+      return jsonResponse(
+        { message: "Unable to update user. Please try again." },
+        500,
+      );
+    }
+
+    if (!selectedRole) {
+      return jsonResponse(
+        { message: "The selected role does not exist." },
+        400,
+      );
+    }
+
+    const { data: updatedTarget, error: updateError } = await admin
+      .from("app_user")
+      .update({ role_code: nextRole })
+      .eq("user_id", target.user_id)
+      .eq("role_code", expectedRole)
+      .select("user_id")
+      .maybeSingle();
+
+    if (updateError) {
+      console.error("Unable to change the user's role.", {
+        code: updateError.code,
+      });
+      return jsonResponse(
+        { message: "Unable to update user. Please try again." },
+        500,
+      );
+    }
+
+    if (!updatedTarget) {
+      return jsonResponse(
+        { message: "The user's role changed. Refresh and try again." },
+        409,
+      );
+    }
+
+    return jsonResponse({ message: "User updated." }, 200);
+  }
+
+  if (
+    body.action !== undefined &&
+    body.action !== "block" &&
+    body.action !== "unblock"
+  ) {
+    return jsonResponse({ message: "Invalid user action." }, 400);
+  }
+
   if (body.action === "block" || body.action === "unblock") {
     if (body.action === "block") {
       if (isActiveSuperadmin(target)) {
@@ -220,6 +359,17 @@ export async function PATCH(
 
   if (Object.keys(errors).length > 0) {
     return jsonResponse({ errors }, 400);
+  }
+
+  if (
+    access.actor.role_code === "superadmin" &&
+    target.user_id === access.actor.user_id &&
+    role !== target.role_code
+  ) {
+    return jsonResponse(
+      { message: "You cannot change your own role." },
+      403,
+    );
   }
 
   const { data: selectedRole, error: roleError } = await admin

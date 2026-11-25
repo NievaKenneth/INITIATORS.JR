@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type ActorRole = "admin" | "superadmin";
 type ManagedUser = {
@@ -14,6 +14,16 @@ type ManagedUser = {
   is_blocked: boolean;
 };
 type UserRole = { role_code: string; role_name: string };
+type RightsModule = {
+  module_code: string;
+  module_name: string;
+  sort_order: number;
+};
+type CatalogRight = {
+  right_code: string;
+  module_code: string;
+  description: string;
+};
 type UserStatus = "Active" | "Pending" | "Inactive" | "Blocked";
 type UserForm = {
   firstName: string;
@@ -29,8 +39,23 @@ type ApiResult = {
   message?: string;
   users?: ManagedUser[];
   roles?: UserRole[];
+  modules?: RightsModule[];
+  rights?: CatalogRight[];
+  selectedModules?: string[];
+  selectedRights?: string[];
 };
 type UserDialog = { kind: "add" } | { kind: "edit"; user: ManagedUser };
+type RightsDialog = {
+  user: ManagedUser;
+  modules: RightsModule[];
+  rights: CatalogRight[];
+  selectedModules: string[];
+  selectedRights: string[];
+  isLoading: boolean;
+  isSaving: boolean;
+  message: string;
+  messageIsError: boolean;
+};
 type UserAction =
   | "block"
   | "unblock"
@@ -81,6 +106,8 @@ export default function UserManagementClient({
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [dialog, setDialog] = useState<UserDialog | null>(null);
+  const [rightsDialog, setRightsDialog] = useState<RightsDialog | null>(null);
+  const rightsRequestRef = useRef(0);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [form, setForm] = useState<UserForm>({
     firstName: "",
@@ -147,18 +174,25 @@ export default function UserManagementClient({
   }, []);
 
   useEffect(() => {
-    if (!dialog && !pendingAction) return;
+    if (!dialog && !rightsDialog && !pendingAction) return;
 
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isSaving && !busyUserId) {
+      if (
+        event.key === "Escape" &&
+        !isSaving &&
+        !rightsDialog?.isSaving &&
+        !busyUserId
+      ) {
         setDialog(null);
+        rightsRequestRef.current += 1;
+        setRightsDialog(null);
         setPendingAction(null);
       }
     }
 
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, [dialog, pendingAction, isSaving, busyUserId]);
+  }, [dialog, rightsDialog, pendingAction, isSaving, busyUserId]);
 
   const visibleUsers = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -197,6 +231,193 @@ export default function UserManagementClient({
     setFieldErrors({});
     setFormMessage("");
     setDialog({ kind: "edit", user });
+  }
+
+  async function openRightsDialog(user: ManagedUser) {
+    const requestId = ++rightsRequestRef.current;
+    setRightsDialog({
+      user,
+      modules: [],
+      rights: [],
+      selectedModules: [],
+      selectedRights: [],
+      isLoading: true,
+      isSaving: false,
+      message: "",
+      messageIsError: false,
+    });
+
+    try {
+      const response = await fetch(
+        `/api/users/${encodeURIComponent(user.user_id)}/rights`,
+        { cache: "no-store" },
+      );
+      const result = await readResponse(response);
+      if (rightsRequestRef.current !== requestId) return;
+      if (
+        !response.ok ||
+        !result.modules ||
+        !result.rights ||
+        !result.selectedModules ||
+        !result.selectedRights
+      ) {
+        setRightsDialog((current) =>
+          current?.user.user_id === user.user_id
+            ? {
+                ...current,
+                isLoading: false,
+                message: result.message ?? "Unable to load user rights. Please try again.",
+                messageIsError: true,
+              }
+            : current,
+        );
+        return;
+      }
+
+      setRightsDialog((current) =>
+        current?.user.user_id === user.user_id
+          ? {
+              ...current,
+              modules: result.modules ?? [],
+              rights: result.rights ?? [],
+              selectedModules: result.selectedModules ?? [],
+              selectedRights: result.selectedRights ?? [],
+              isLoading: false,
+            }
+          : current,
+      );
+    } catch {
+      if (rightsRequestRef.current !== requestId) return;
+      setRightsDialog((current) =>
+        current?.user.user_id === user.user_id
+          ? {
+              ...current,
+              isLoading: false,
+              message: "Unable to load user rights. Please try again.",
+              messageIsError: true,
+            }
+          : current,
+      );
+    }
+  }
+
+  function closeRightsDialog() {
+    if (rightsDialog?.isSaving) return;
+    rightsRequestRef.current += 1;
+    setRightsDialog(null);
+  }
+
+  function setRightsModule(moduleCode: string, enabled: boolean) {
+    setRightsDialog((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        selectedModules: enabled
+          ? [...current.selectedModules, moduleCode]
+          : current.selectedModules.filter((code) => code !== moduleCode),
+        selectedRights: enabled
+          ? current.selectedRights
+          : current.selectedRights.filter(
+              (rightCode) =>
+                !current.rights.some(
+                  (right) =>
+                    right.right_code === rightCode &&
+                    right.module_code === moduleCode,
+                ),
+            ),
+      };
+    });
+  }
+
+  function setModuleRights(moduleCode: string, selected: boolean) {
+    setRightsDialog((current) => {
+      if (!current) return current;
+      const moduleRights = current.rights
+        .filter((right) => right.module_code === moduleCode)
+        .map((right) => right.right_code);
+      return {
+        ...current,
+        selectedModules: selected
+          ? current.selectedModules.includes(moduleCode)
+            ? current.selectedModules
+            : [...current.selectedModules, moduleCode]
+          : current.selectedModules,
+        selectedRights: selected
+          ? [...new Set([...current.selectedRights, ...moduleRights])]
+          : current.selectedRights.filter(
+              (rightCode) => !moduleRights.includes(rightCode),
+            ),
+      };
+    });
+  }
+
+  function toggleRight(rightCode: string, selected: boolean) {
+    setRightsDialog((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        selectedRights: selected
+          ? [...current.selectedRights, rightCode]
+          : current.selectedRights.filter((code) => code !== rightCode),
+      };
+    });
+  }
+
+  async function saveRights(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!rightsDialog || rightsDialog.isLoading || rightsDialog.isSaving) return;
+
+    const { user, selectedModules, selectedRights } = rightsDialog;
+    const requestId = rightsRequestRef.current;
+    setRightsDialog((current) =>
+      current ? { ...current, isSaving: true, message: "" } : current,
+    );
+
+    try {
+      const response = await fetch(
+        `/api/users/${encodeURIComponent(user.user_id)}/rights`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            modules: selectedModules,
+            rights: selectedRights,
+          }),
+        },
+      );
+      const result = await readResponse(response);
+      if (rightsRequestRef.current !== requestId) return;
+      if (!response.ok) {
+        setRightsDialog((current) =>
+          current?.user.user_id === user.user_id
+            ? {
+                ...current,
+                isSaving: false,
+                message: result.message ?? "Unable to save rights. Please try again.",
+                messageIsError: true,
+              }
+            : current,
+        );
+        return;
+      }
+
+      rightsRequestRef.current += 1;
+      setRightsDialog(null);
+      setNotice(result.message ?? "Rights saved.");
+      setNoticeIsError(false);
+    } catch {
+      if (rightsRequestRef.current !== requestId) return;
+      setRightsDialog((current) =>
+        current?.user.user_id === user.user_id
+          ? {
+              ...current,
+              isSaving: false,
+              message: "Unable to save rights. Please try again.",
+              messageIsError: true,
+            }
+          : current,
+      );
+    }
   }
 
   function updateField(field: UserField, value: string) {
@@ -510,6 +731,16 @@ export default function UserManagementClient({
                                   {user.is_blocked ? "Unblock" : "Block"}
                                 </button>
                               )}
+                              {user.role_code === "user" ? (
+                                <button
+                                  className="rounded-[6px] border border-hope-border px-2.5 py-1.5 text-xs font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2 disabled:opacity-50"
+                                  type="button"
+                                  disabled={isBusy}
+                                  onClick={() => void openRightsDialog(user)}
+                                >
+                                  Rights
+                                </button>
+                              ) : null}
                               <button
                                 className="rounded-[6px] border border-hope-border px-2.5 py-1.5 text-xs font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2"
                                 type="button"
@@ -754,6 +985,185 @@ export default function UserManagementClient({
                     : dialog.kind === "add"
                       ? "Add User"
                       : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      ) : null}
+
+      {rightsDialog ? (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeRightsDialog();
+          }}
+        >
+          <section
+            className="max-h-[90vh] w-full max-w-[760px] overflow-y-auto rounded-[10px] border border-hope-border bg-white p-6 shadow-[0_12px_36px_rgb(20_45_39_/_18%)] sm:p-8"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rights-dialog-title"
+          >
+            <header className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <h2
+                  className="text-xl font-semibold text-hope-forest"
+                  id="rights-dialog-title"
+                >
+                  User Rights
+                </h2>
+                <p className="mt-1 text-sm text-hope-ink/75">
+                  {rightsDialog.user.first_name} {rightsDialog.user.last_name}
+                  {" · "}
+                  {rightsDialog.user.email}
+                </p>
+                <p className="mt-1 text-sm text-hope-ink/75">
+                  Choose module access and actions.
+                </p>
+              </div>
+              <button
+                className="rounded-[6px] border border-hope-border px-3 py-2 text-xs font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2"
+                type="button"
+                disabled={rightsDialog.isSaving}
+                onClick={closeRightsDialog}
+              >
+                Close
+              </button>
+            </header>
+
+            <form className="grid gap-5" id="rights-form" onSubmit={saveRights}>
+              {rightsDialog.isLoading ? (
+                <p className="text-sm text-hope-ink/75" role="status">
+                  Loading rights...
+                </p>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {rightsDialog.modules.map((module) => {
+                    const moduleRights = rightsDialog.rights.filter(
+                      (right) => right.module_code === module.module_code,
+                    );
+                    const moduleEnabled =
+                      rightsDialog.selectedModules.includes(module.module_code);
+                    return (
+                      <section
+                        className="rounded-[10px] border border-hope-border p-4"
+                        key={module.module_code}
+                      >
+                        <div className="flex items-center justify-between gap-3 border-b border-hope-border pb-3">
+                          <label className="flex items-center gap-2 text-sm font-semibold text-hope-forest">
+                            <input
+                              className="size-4 accent-hope-green-2"
+                              type="checkbox"
+                              data-module={module.module_code}
+                              checked={moduleEnabled}
+                              disabled={rightsDialog.isSaving}
+                              autoFocus={
+                                rightsDialog.modules[0]?.module_code ===
+                                module.module_code
+                              }
+                              onChange={(event) =>
+                                setRightsModule(
+                                  module.module_code,
+                                  event.target.checked,
+                                )
+                              }
+                            />
+                            <span>{module.module_name}</span>
+                          </label>
+                          <div className="flex gap-2">
+                            <button
+                              className="rounded-[6px] border border-hope-border px-2 py-1 text-xs font-semibold text-hope-forest hover:bg-hope-ivory disabled:opacity-50"
+                              type="button"
+                              disabled={rightsDialog.isSaving}
+                              data-rights-all={module.module_code}
+                              onClick={() =>
+                                setModuleRights(module.module_code, true)
+                              }
+                            >
+                              All
+                            </button>
+                            <button
+                              className="rounded-[6px] border border-hope-border px-2 py-1 text-xs font-semibold text-hope-forest hover:bg-hope-ivory disabled:opacity-50"
+                              type="button"
+                              disabled={rightsDialog.isSaving}
+                              data-rights-none={module.module_code}
+                              onClick={() =>
+                                setRightsModule(module.module_code, false)
+                              }
+                            >
+                              None
+                            </button>
+                          </div>
+                        </div>
+                        <div className="grid gap-2 pt-3">
+                          {moduleRights.map((right) => (
+                            <label
+                              className="flex items-center gap-2 text-sm text-hope-ink"
+                              key={right.right_code}
+                            >
+                              <input
+                                className="size-4 accent-hope-green-2"
+                                type="checkbox"
+                                data-right={right.right_code}
+                                data-module-action={module.module_code}
+                                checked={rightsDialog.selectedRights.includes(
+                                  right.right_code,
+                                )}
+                                disabled={
+                                  !moduleEnabled || rightsDialog.isSaving
+                                }
+                                onChange={(event) =>
+                                  toggleRight(
+                                    right.right_code,
+                                    event.target.checked,
+                                  )
+                                }
+                              />
+                              <span>{right.description}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              )}
+
+              {rightsDialog.message ? (
+                <p
+                  className={`rounded-[6px] border-l-[3px] px-3 py-2.5 text-sm ${
+                    rightsDialog.messageIsError
+                      ? "border-hope-gold bg-hope-ivory text-hope-ink"
+                      : "border-hope-green-2 bg-hope-sage text-hope-forest"
+                  }`}
+                  id="rights-form-message"
+                  role={rightsDialog.messageIsError ? "alert" : "status"}
+                  aria-live="polite"
+                >
+                  {rightsDialog.message}
+                </p>
+              ) : null}
+
+              <div className="flex justify-end gap-3 border-t border-hope-border pt-4">
+                <button
+                  className="min-h-10 rounded-[6px] border border-hope-border px-4 text-sm font-semibold text-hope-forest hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2"
+                  type="button"
+                  disabled={rightsDialog.isSaving}
+                  onClick={closeRightsDialog}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="min-h-10 rounded-[6px] bg-hope-forest px-4 text-sm font-semibold text-white transition-colors hover:bg-hope-green-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2 disabled:cursor-not-allowed disabled:opacity-60"
+                  type="submit"
+                  disabled={
+                    rightsDialog.isLoading ||
+                    rightsDialog.isSaving ||
+                    rightsDialog.modules.length === 0
+                  }
+                >
+                  {rightsDialog.isSaving ? "Saving..." : "Save Rights"}
                 </button>
               </div>
             </form>

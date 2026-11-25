@@ -5,7 +5,12 @@ import LoginForm from "./LoginForm";
 export const instant = false;
 
 type LoginPageProps = {
-  searchParams: Promise<{ passwordSet?: string }>;
+  searchParams: Promise<{
+    confirmed?: string;
+    error?: string;
+    passwordSet?: string;
+    passwordUpdated?: string;
+  }>;
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
@@ -20,5 +25,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   const params = await searchParams;
-  return <LoginForm passwordWasSet={params.passwordSet === "1"} />;
+  return (
+    <LoginForm
+      emailWasConfirmed={params.confirmed === "1"}
+      confirmationLinkIsInvalid={params.error === "invalid_link"}
+      passwordWasSet={params.passwordSet === "1"}
+      passwordWasUpdated={params.passwordUpdated === "1"}
+    />
+  );
 }

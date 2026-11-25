@@ -15,18 +15,34 @@ type LoginResponse = {
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginForm({
+  emailWasConfirmed,
+  confirmationLinkIsInvalid,
   passwordWasSet,
+  passwordWasUpdated,
 }: {
+  emailWasConfirmed: boolean;
+  confirmationLinkIsInvalid: boolean;
   passwordWasSet: boolean;
+  passwordWasUpdated: boolean;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<LoginErrors>({});
   const [message, setMessage] = useState(
-    passwordWasSet ? "Password set. You can now sign in." : "",
+    emailWasConfirmed
+      ? "Email confirmed. Your account will be ready once an admin approves it."
+      : confirmationLinkIsInvalid
+        ? "This confirmation link is invalid or has expired."
+        : passwordWasUpdated
+          ? "Password updated. You can now sign in."
+          : passwordWasSet
+            ? "Password set. You can now sign in."
+            : "",
   );
-  const [isSuccess, setIsSuccess] = useState(passwordWasSet);
+  const [isSuccess, setIsSuccess] = useState(
+    emailWasConfirmed || passwordWasSet || passwordWasUpdated,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 

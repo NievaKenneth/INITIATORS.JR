@@ -57,6 +57,13 @@ export async function POST(request: Request) {
     error: signInError,
   } = await supabase.auth.signInWithPassword({ email, password });
 
+  if (signInError?.code === "email_not_confirmed") {
+    return jsonResponse(
+      { message: "Please confirm your email first. Check your inbox." },
+      401,
+    );
+  }
+
   if (signInError || !user) {
     return jsonResponse(
       { message: "Email or password is incorrect." },

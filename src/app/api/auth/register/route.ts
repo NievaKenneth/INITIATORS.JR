@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
 type RegistrationField =
   | "firstName"
@@ -22,6 +23,22 @@ function duplicateEmailResponse() {
     { errors: { email: "An account with this email already exists." } },
     { status: 409 },
   );
+}
+
+function getConfirmationUrl() {
+  const appUrl = process.env.APP_URL?.trim();
+  if (!appUrl) return null;
+
+  try {
+    const baseUrl = new URL(appUrl);
+    if (baseUrl.protocol !== "http:" && baseUrl.protocol !== "https:") {
+      return null;
+    }
+
+    return new URL("/auth/confirm?next=/login", baseUrl).toString();
+  } catch {
+    return null;
+  }
 }
 
 function isDuplicateAuthEmailError(code: string | null | undefined, message: string) {
@@ -103,6 +120,7 @@ export async function POST(request: Request) {
     "NEXT_PUBLIC_SUPABASE_URL",
     "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY",
+    "APP_URL",
   ].filter((name) => !process.env[name]?.trim());
 
   if (missingEnvironment.length > 0) {
@@ -112,12 +130,43 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = createAdminClient();
-  const { data, error: authError } = await supabase.auth.admin.createUser({
+  const confirmationUrl = getConfirmationUrl();
+  if (!confirmationUrl) {
+    return NextResponse.json(
+      { message: "Registration is not configured. Contact support." },
+      { status: 503 },
+    );
+  }
+
+  const admin = createAdminClient();
+  const { data: existingUser, error: lookupError } = await admin
+    .from("app_user")
+    .select("user_id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (lookupError) {
+    console.error("Unable to check for an existing registration email.", {
+      code: lookupError.code,
+    });
+    return NextResponse.json(
+      { message: "Registration could not be completed. Please try again." },
+      { status: 500 },
+    );
+  }
+
+  if (existingUser) {
+    return duplicateEmailResponse();
+  }
+
+  const supabase = await createClient();
+  const { data, error: authError } = await supabase.auth.signUp({
     email,
     password,
-    email_confirm: false,
-    user_metadata: { firstName, lastName },
+    options: {
+      emailRedirectTo: confirmationUrl,
+      data: { firstName, lastName },
+    },
   });
 
   if (authError) {
@@ -134,8 +183,28 @@ export async function POST(request: Request) {
     );
   }
 
-  const { user } = data;
-  const { error: profileError } = await supabase.from("app_user").insert({
+  const { user, session } = data;
+  if (!user) {
+    return NextResponse.json(
+      { message: "Registration could not be completed. Please try again." },
+      { status: 500 },
+    );
+  }
+
+  if (session) {
+    const { error: signOutError } = await supabase.auth.signOut();
+    if (signOutError) {
+      console.error("Unable to clear the session created during registration.", {
+        code: signOutError.name,
+      });
+      return NextResponse.json(
+        { message: "Registration could not be completed. Please try again." },
+        { status: 500 },
+      );
+    }
+  }
+
+  const { error: profileError } = await admin.from("app_user").insert({
     user_id: user.id,
     first_name: firstName,
     last_name: lastName,
@@ -145,7 +214,7 @@ export async function POST(request: Request) {
   });
 
   if (profileError) {
-    const { error: cleanupError } = await supabase.auth.admin.deleteUser(user.id);
+    const { error: cleanupError } = await admin.auth.admin.deleteUser(user.id);
 
     console.error("Unable to create the app_user profile after Auth signup.", {
       profileCode: profileError.code,
@@ -169,7 +238,10 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(
-    { message: "Your account is waiting for admin approval." },
+    {
+      message:
+        "Check your email to confirm your account. An admin must also approve it before you can sign in.",
+    },
     { status: 201 },
   );
 }

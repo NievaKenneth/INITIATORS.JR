@@ -130,7 +130,8 @@ export default function RegisterPage() {
     }
 
     setMessage(
-      result.message ?? "Your account is waiting for admin approval.",
+      result.message ??
+        "Check your email to confirm your account. An admin must also approve it before you can sign in.",
     );
     setIsSuccess(true);
   }

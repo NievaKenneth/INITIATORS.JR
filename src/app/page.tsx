@@ -1,47 +1,139 @@
-// TEMPORARY: replaced by the UIX-04 landing page in DEV-08.
 import Link from "next/link";
+
+const publicModules = [
+  {
+    mark: "C",
+    title: "Customers",
+    description: "Keep customer information organized in one place.",
+  },
+  {
+    mark: "P",
+    title: "Products",
+    description: "Manage products and pricing with clarity.",
+  },
+  {
+    mark: "HR",
+    title: "Human Resources",
+    description: "Support your people and their work.",
+  },
+  {
+    mark: "S",
+    title: "Sales",
+    description: "Keep sales activity moving in one workspace.",
+  },
+  {
+    mark: "R",
+    title: "Reports",
+    description: "Find useful insights for everyday decisions.",
+  },
+  {
+    mark: "U",
+    title: "User Management",
+    description: "Manage account access and assigned rights.",
+  },
+];
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-hope-ivory">
-      <header className="bg-hope-sidebar text-white">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-6 py-5">
-          <span className="grid size-10 place-items-center rounded-xl bg-hope-gold font-bold text-hope-sidebar">
+    <>
+      <header className="landing-page landing-topbar">
+        <Link
+          className="landing-brand"
+          href="/"
+          aria-label="Hope, Inc. ERP home"
+        >
+          <span className="landing-brand-mark" aria-hidden="true">
             H
           </span>
-          <div>
-            <p className="font-semibold">HOPE Inc.</p>
-            <p className="text-sm text-white/70">Enterprise Resource Planning</p>
-          </div>
-        </div>
+          <span>
+            <span className="landing-brand-name">HOPE, INC. ERP</span>
+            <span className="landing-brand-caption">
+              Enterprise Resource Planning
+            </span>
+          </span>
+        </Link>
+        <nav className="landing-nav-actions" aria-label="Account">
+          <Link className="landing-button landing-button-secondary" href="/login">
+            Sign In
+          </Link>
+          <Link className="landing-button landing-button-primary" href="/register">
+            Register
+          </Link>
+        </nav>
       </header>
 
-      <section className="mx-auto flex min-h-[calc(100vh-84px)] max-w-7xl items-center px-6 py-16 sm:py-24">
-        <div className="max-w-2xl">
-          <h1 className="text-4xl font-semibold tracking-tight text-hope-forest sm:text-5xl">
-            Welcome to HOPE Inc. ERP
-          </h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-hope-ink/75">
-            Sign in to continue or register to request access to your ERP
-            workspace.
-          </p>
-
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              className="inline-flex min-h-10 items-center justify-center rounded-[6px] bg-hope-forest px-4 text-sm font-semibold text-white transition-colors hover:bg-hope-green-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2"
-              href="/login"
-            >
-              Sign In
-            </Link>
-            <Link
-              className="inline-flex min-h-10 items-center justify-center rounded-[6px] border border-hope-border bg-white px-4 text-sm font-semibold text-hope-forest transition-colors hover:bg-hope-ivory focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-hope-green-2"
-              href="/register"
-            >
-              Register
-            </Link>
+      <main className="landing-page">
+        <section className="landing-hero" aria-labelledby="hero-title">
+          <div className="landing-hero-copy">
+            <p className="landing-eyebrow">HOPE Inc. ERP</p>
+            <h1 id="hero-title">Your work, working together.</h1>
+            <p>
+              Bring your team and daily operations into one clear workspace.
+            </p>
+            <div className="landing-button-row">
+              <Link
+                className="landing-button landing-button-primary"
+                href="/login"
+              >
+                Sign In
+              </Link>
+              <Link
+                className="landing-button landing-button-secondary"
+                href="/register"
+              >
+                Register
+              </Link>
+            </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+        <section className="landing-modules" aria-labelledby="modules-title">
+          <header className="landing-section-heading">
+            <p className="landing-eyebrow">One connected workspace</p>
+            <h2 id="modules-title">Everything your team needs</h2>
+          </header>
+          <div className="landing-module-grid">
+            {publicModules.map((module) => (
+              <article className="landing-module-card" key={module.title}>
+                <span className="landing-module-mark" aria-hidden="true">
+                  {module.mark}
+                </span>
+                <h3>{module.title}</h3>
+                <p>{module.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="landing-how-it-works" aria-labelledby="how-title">
+          <header className="landing-section-heading">
+            <p className="landing-eyebrow">Getting started</p>
+            <h2 id="how-title">How it works</h2>
+          </header>
+          <div className="landing-steps-grid">
+            <article className="landing-step-card">
+              <span className="landing-step-number" aria-hidden="true">
+                1
+              </span>
+              <h3>Register</h3>
+            </article>
+            <article className="landing-step-card">
+              <span className="landing-step-number" aria-hidden="true">
+                2
+              </span>
+              <h3>Wait for admin approval</h3>
+            </article>
+            <article className="landing-step-card">
+              <span className="landing-step-number" aria-hidden="true">
+                3
+              </span>
+              <h3>Start working with your assigned modules</h3>
+            </article>
+          </div>
+        </section>
+
+        <footer className="landing-footer">HOPE Inc. ERP</footer>
+      </main>
+    </>
   );
 }

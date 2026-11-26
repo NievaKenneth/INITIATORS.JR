@@ -13,7 +13,10 @@ function isPrivatePage(pathname: string) {
     pathname === "/reset-password" ||
     pathname === "/set-password" ||
     pathname === "/dashboard" ||
-    pathname === "/user-dashboard"
+    pathname === "/user-dashboard" ||
+    pathname === "/users" ||
+    pathname === "/settings" ||
+    pathname.startsWith("/modules/")
   );
 }
 
@@ -35,6 +38,10 @@ function redirectWithCookies(
 }
 
 export async function proxy(request: NextRequest) {
+  if (request.nextUrl.pathname === "/") {
+    return NextResponse.next({ request });
+  }
+
   const { url, anonKey } = getSupabaseConfig();
   let response = NextResponse.next({ request });
 
@@ -57,7 +64,11 @@ export async function proxy(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isProtectedPage =
-    pathname === "/dashboard" || pathname === "/user-dashboard";
+    pathname === "/dashboard" ||
+    pathname === "/user-dashboard" ||
+    pathname === "/users" ||
+    pathname === "/settings" ||
+    pathname.startsWith("/modules/");
   const isAuthEntry = pathname === "/login" || pathname === "/register";
   const isSetPassword = pathname === "/set-password";
 
@@ -175,6 +186,13 @@ export async function proxy(request: NextRequest) {
   if (
     pathname === "/user-dashboard" &&
     roleDashboard === "/dashboard"
+  ) {
+    return redirectWithCookies(request, response, roleDashboard);
+  }
+
+  if (
+    (pathname === "/users" && appUser.role_code === "user") ||
+    (pathname === "/settings" && appUser.role_code !== "superadmin")
   ) {
     return redirectWithCookies(request, response, roleDashboard);
   }

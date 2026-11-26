@@ -18,13 +18,16 @@ export type WorkspaceModuleAccess = {
 
 function getModulePresentation(moduleCode: string) {
   switch (moduleCode) {
+    case "customers":
     case "customer":
       return {
         glyph: "C",
         summary: "Customer information and relationships.",
       };
+    case "products":
     case "product":
       return { glyph: "P", summary: "Product and pricing information." };
+    case "hr":
     case "humanResources":
       return { glyph: "HR", summary: "People, departments, jobs, and history." };
     case "sales":
@@ -32,10 +35,8 @@ function getModulePresentation(moduleCode: string) {
     case "reports":
       return { glyph: "R", summary: "Business reports and employee insights." };
     default:
-      console.error("Unsupported module in the module catalogue.", {
-        code: moduleCode,
-      });
-      throw new Error("Unsupported module in the module catalogue.");
+      console.error("Unsupported module code in the catalogue:", moduleCode);
+      return null;
   }
 }
 
@@ -56,12 +57,21 @@ export async function getWorkspaceModuleAccess(
     throw new Error("Unable to load workspace modules.");
   }
 
-  const modules = moduleRows.map((module) => ({
-    moduleCode: module.module_code,
-    moduleName: module.module_name,
-    sortOrder: module.sort_order,
-    ...getModulePresentation(module.module_code),
-  }));
+  const modules: WorkspaceModule[] = moduleRows.flatMap((module) => {
+    const presentation = getModulePresentation(module.module_code);
+    if (!presentation) {
+      return [];
+    }
+
+    return [
+      {
+        moduleCode: module.module_code,
+        moduleName: module.module_name,
+        sortOrder: module.sort_order,
+        ...presentation,
+      },
+    ];
+  });
 
   if (appUser.role_code !== "user") {
     return {
